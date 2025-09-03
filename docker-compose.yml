@@ -1,49 +1,30 @@
-version: "3.9"
 services:
-  platform-db:
+  postgres:
     image: postgres:16
+    container_name: duovera-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: platform
-      POSTGRES_PASSWORD: platform
-      POSTGRES_DB: platformdb
-    ports: [ "5433:5432" ]
-    volumes: [ "platform_pg:/var/lib/postgresql/data" ]
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U platform -d platformdb" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres" ]
       interval: 5s
       timeout: 3s
       retries: 20
 
-  appdata-db:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: appdata
-      POSTGRES_PASSWORD: appdata
-      POSTGRES_DB: appdatadb
-    ports: [ "5434:5432" ]
-    volumes: [ "appdata_pg:/var/lib/postgresql/data" ]
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U appdata -d appdatadb" ]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    environment:
-      PLATFORM_DATABASE_URL: "postgresql://platform:platform@platform-db:5432/platformdb?schema=public"
-      APPDATA_DATABASE_URL: "postgresql://appdata:appdata@appdata-db:5432/appdatadb?schema=public"
-      JWT_ACCESS_SECRET: "CHANGE_ME_LONG_RANDOM"
-      JWT_REFRESH_SECRET: "CHANGE_ME_LONG_RANDOM_2"
-      JWT_ACCESS_TTL: "900s"
-      JWT_REFRESH_TTL: "30d"
-      BCRYPT_SALT_ROUNDS: "12"
-      NODE_ENV: "development"
-    ports: [ "4000:4000" ]
-    depends_on: [ platform-db, appdata-db ]
+  adminer:
+    image: adminer:latest
+    container_name: duovera-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
 
 volumes:
-  platform_pg:
-  appdata_pg:
+  pgdata:

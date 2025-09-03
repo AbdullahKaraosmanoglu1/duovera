@@ -1,0 +1,7 @@
+DDD kullanmalıyız ama hafif seviyede: aggregate sınırları, domain event’ler, value object’ler.
+
+CQRS kesinlikle: handler bazlı küçük birimler; test kolay.
+
+Feature-Based evet: her bounded context, kendi alt katmanlarıyla birlikte bir “feature” klasörü.
+
+Bu kombinasyon; best-practice, sade, test edilebilir ve ekibe yayıldıkça yönetmesi kolay bir yapı sağlar.

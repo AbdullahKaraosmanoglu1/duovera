@@ -1,0 +1,58 @@
+// prisma/appdata/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/appdata"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("APPDATA_DATABASE_URL")
+}
+
+enum VersionStatus {
+  draft
+  published
+  archived
+}
+
+model Form {
+  id             String        @id @default(uuid())
+  organizationId String
+  name           String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  versions       FormVersion[]
+  records        Record[] // Record.form için karşı alan
+}
+
+model FormVersion {
+  id        String        @id @default(uuid())
+  formId    String
+  version   Int
+  status    VersionStatus @default(draft)
+  schema    Json
+  createdAt DateTime      @default(now())
+
+  form Form @relation(fields: [formId], references: [id])
+
+  @@unique([formId, version])
+}
+
+model Record {
+  id             String   @id @default(uuid())
+  organizationId String
+  formId         String
+  formVersion    Int
+  data           Json
+  state          String
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  form Form @relation(fields: [formId], references: [id])
+
+  @@index([formId, formVersion])
+  @@index([organizationId])
+  @@index([state])
+}
