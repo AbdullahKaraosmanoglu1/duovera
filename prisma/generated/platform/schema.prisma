@@ -1,0 +1,57 @@
+// prisma/platform/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/platform"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PLATFORM_DATABASE_URL")
+}
+
+model User {
+  id           String             @id @default(uuid())
+  email        String             @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  isActive     Boolean            @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  memberships  OrganizationUser[]
+}
+
+model Organization {
+  id        String             @id @default(uuid())
+  name      String
+  slug      String             @unique
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  members   OrganizationUser[]
+}
+
+model OrganizationUser {
+  id             String @id @default(uuid())
+  organizationId String
+  userId         String
+  role           Role   @default(viewer)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  owner
+  admin
+  editor
+  viewer
+}
+
+model Permission {
+  id        String   @id @default(uuid())
+  code      String   @unique // e.g. "forms:create", "records:read"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
